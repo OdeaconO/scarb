@@ -1,0 +1,116 @@
+#root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 90px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  box-sizing: border-box;
+}
+
+h2 {
+  margin: 0 0 0.6rem 0;
+  font-size: 1.4rem;
+}
+
+.card {
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.logo {
+  height: 44px;
+  transition: transform 160ms ease, filter 160ms ease;
+}
+.logo:hover {
+  transform: translateY(-3px);
+  filter: drop-shadow(0 4px 18px rgba(100, 108, 255, 0.12));
+}
+
+.nes-container.is-dark {
+  background: transparent;
+}
+a {
+  color: inherit;
+}
+
+.nes-container form input,
+.nes-container form select {
+  width: 100%;
+}
+
+nav.nes-container {
+  position: fixed;
+  top: 12px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: calc(100% - 2rem);
+  max-width: var(--max-width);
+  padding: 0.6rem 1rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+  background: rgba(20, 20, 24, 0.7);
+  backdrop-filter: blur(6px);
+}
+
+nav.nes-container > .nav-inner {
+  width: 100%;
+  max-width: calc(var(--max-width) - 2rem);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+nav.nes-container form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  min-width: 0;
+}
+
+nav.nes-container form:first-of-type {
+  flex: 1 1 280px;
+  max-width: 720px;
+}
+nav.nes-container form:last-of-type {
+  flex: 0 0 auto;
+}
+
+nav.nes-container input.nes-input,
+nav.nes-container select.nes-select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  nav.nes-container {
+    top: 8px;
+    padding: 0.5rem;
+  }
+  nav.nes-container > .nav-inner {
+    gap: 0.5rem;
+  }
+  nav.nes-container form:last-of-type {
+    display: none;
+  }
+}
+
+.pagination {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+:focus {
+  outline: 3px solid rgba(100, 108, 255, 0.12);
+  outline-offset: 2px;
+  border-color: rgba(100, 108, 255, 0.18);
+}
