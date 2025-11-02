@@ -1,5 +1,7 @@
+// SignUpPage.jsx (replace existing)
 import axios from "axios";
 import { useState } from "react";
+import { uploadFileAndGetUrl } from "../lib/blobUpload";
 
 export default function SignUpPage() {
   const [form, setForm] = useState({
@@ -8,27 +10,50 @@ export default function SignUpPage() {
     address: "",
     email: "",
     idNumber: "",
-    idProof: null,
     password: "",
   });
+  const [idProofFile, setIdProofFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleFile = (e) => setForm({ ...form, ifProof: e.target.files[0] });
+  const handleChange = (e) =>
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  const handleFile = (e) => setIdProofFile(e.target.files[0] || null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    try {
+      let idProofUrl = null;
+      if (idProofFile) {
+        idProofUrl = await uploadFileAndGetUrl(idProofFile);
+      }
 
-    const formData = new FormData();
-    Object.keys(form).forEach((key) => formData.append(key, form[key]));
-    await axios.post("/api/auth/signup", formData);
+      const body = {
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        email: form.email,
+        idNumber: form.idNumber,
+        password: form.password,
+        idProofUrl, // <-- URL returned by Vercel Blob
+      };
+
+      await axios.post("/api/auth/signup", body, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      setLoading(false);
+      // optionally, navigate to login or auto-login
+      window.location = "/login";
+    } catch (err) {
+      setLoading(false);
+      console.error(err);
+      alert("Signup failed");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="nes-container is-dark">
-      {/* INPUTS */}
       <input
         name="name"
         value={form.name}
@@ -78,10 +103,9 @@ export default function SignUpPage() {
         placeholder="Password"
         required
       />
-      <button className="nes-btn is-primary" type="submit">
-        Create Account
+      <button className="nes-btn is-primary" type="submit" disabled={loading}>
+        {loading ? "Signing up…" : "Create Account"}
       </button>
-      <p>Please enter the email and phone you want buyers to contact.</p>
     </form>
   );
 }

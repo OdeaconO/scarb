@@ -1,5 +1,7 @@
+// ListingForm.jsx (replace existing)
 import axios from "axios";
 import { useState } from "react";
+import { uploadFileAndGetUrl } from "../lib/blobUpload";
 
 export default function ListingForm({ onListingAdded }) {
   const [form, setForm] = useState({
@@ -10,42 +12,56 @@ export default function ListingForm({ onListingAdded }) {
     transmission: "",
     bodyStyle: "",
     mileage: "",
-    contactPref: "true", // keep as string to avoid controlled-type mismatch
-    carImage: null,
+    contactPref: "true",
   });
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((p) => ({ ...p, [name]: value }));
   }
 
   function handleFile(e) {
-    setForm((prev) => ({ ...prev, carImage: e.target.files[0] }));
+    setFile(e.target.files[0] || null);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const data = new FormData();
+    setLoading(true);
+    try {
+      let imageUrl = null;
+      if (file) {
+        imageUrl = await uploadFileAndGetUrl(file);
+      }
 
-    // Append keys explicitly to have control over types (and ensure file works)
-    data.append("brand", form.brand);
-    data.append("model", form.model);
-    data.append("year", form.year);
-    data.append("seating", form.seating);
-    data.append("transmission", form.transmission);
-    data.append("bodyStyle", form.bodyStyle);
-    data.append("mileage", form.mileage);
-    // send contactPref as "true"/"false" string (backend can cast if needed)
-    data.append("contactPref", form.contactPref);
-    if (form.carImage) data.append("carImage", form.carImage);
+      const payload = {
+        brand: form.brand,
+        model: form.model,
+        year: form.year,
+        seating: form.seating,
+        transmission: form.transmission,
+        bodyStyle: form.bodyStyle,
+        mileage: form.mileage,
+        contactPref: form.contactPref,
+        imageUrl, // <--- URL returned by Vercel Blob
+      };
 
-    // static user for now (same as before)
-    data.append("userId", 1);
+      const token = localStorage.getItem("token");
+      await axios.post("/api/cars/sell", payload, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      });
 
-    await axios.post("/api/cars/sell", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    onListingAdded();
+      setLoading(false);
+      onListingAdded && onListingAdded();
+    } catch (err) {
+      setLoading(false);
+      console.error(err);
+      alert("Upload/listing failed");
+    }
   }
 
   return (
@@ -74,8 +90,6 @@ export default function ListingForm({ onListingAdded }) {
         required
         className="nes-input"
       />
-
-      {/* Seating select with non-selectable placeholder */}
       <select
         name="seating"
         value={form.seating}
@@ -91,8 +105,6 @@ export default function ListingForm({ onListingAdded }) {
         <option value="5">5</option>
         <option value="7">7</option>
       </select>
-
-      {/* Transmission select */}
       <select
         name="transmission"
         value={form.transmission}
@@ -106,8 +118,6 @@ export default function ListingForm({ onListingAdded }) {
         <option value="automatic">Automatic</option>
         <option value="manual">Manual</option>
       </select>
-
-      {/* Body style select */}
       <select
         name="bodyStyle"
         value={form.bodyStyle}
@@ -125,7 +135,6 @@ export default function ListingForm({ onListingAdded }) {
         <option value="pickup">Pickup</option>
         <option value="crossover">Crossover</option>
       </select>
-
       <input
         name="mileage"
         placeholder="Mileage"
@@ -133,7 +142,6 @@ export default function ListingForm({ onListingAdded }) {
         onChange={handleChange}
         className="nes-input"
       />
-
       <input
         name="carImage"
         type="file"
@@ -141,10 +149,8 @@ export default function ListingForm({ onListingAdded }) {
         required
         className="nes-input"
       />
-
       <label style={{ display: "block", marginTop: "0.4rem" }}>
-        Would you like to display your phone number along with your email to
-        potential buyers?
+        Display phone to buyers?
         <select
           name="contactPref"
           value={form.contactPref}
@@ -157,8 +163,12 @@ export default function ListingForm({ onListingAdded }) {
         </select>
       </label>
 
-      <button className="nes-btn is-primary" style={{ marginTop: "0.6rem" }}>
-        Upload Listing
+      <button
+        className="nes-btn is-primary"
+        style={{ marginTop: "0.6rem" }}
+        disabled={loading}
+      >
+        {loading ? "Uploading…" : "Upload Listing"}
       </button>
     </form>
   );
